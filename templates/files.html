@@ -1,0 +1,41 @@
+{{ template "protocol" }}
+
+<form method=post>
+<table >
+<tr><th></th><th>File</th><th>Shared Key</th><th>&emsp; Expiary</th></tr>
+{{ $host := .Host}}
+{{ range .Files}}
+
+<tr>
+  <td>
+
+{{ if .Candelete}}
+    <input type=checkbox name=fileid value='{{.Fileid}}' />
+{{end}}
+  </td>
+
+  <td>
+    <a target=_blank id="link" href='//{{.Filelink}}'>{{.Filename}}</a>
+  </td>
+  <td align=center><font color=green>
+			<a id="link" href='//{{$host}}/upload?searchkey={{.Sharekey}}'>
+			{{.Sharekey}}</a></font>
+  </td>
+  <td align=center>
+   &emsp; {{.Filetime}}
+    </td>
+<tr>
+{{end}}
+</table>
+
+{{ if .Candelete}}
+  <input type=submit name=remove value=Remove />
+{{end}}
+</form>
+
+{{ template "putprotocol"  }}
+
+      </div><div class='well'>
+	      Copyright &copy; Code 2020-2024</div></div>
+  </body>
+</html>

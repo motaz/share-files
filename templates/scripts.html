@@ -1,0 +1,13 @@
+{{ define "protocol" }}
+<script>
+let protocol = location.protocol;
+</script>
+{{end}}
+
+{{ define "putprotocol" }}
+
+<script>
+  document.getElementByID("link").href = protocol + document.getElementByID("link").href 
+</script>
+
+{{end}}

@@ -1,0 +1,48 @@
+<head>
+    <title>Upload File</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/upload/resources/css/bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="/upload/resources/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <div class="container">
+
+        <div class="well">
+            <h3> <a href="/upload">Upload</a> any file And share it !
+           &emsp;&emsp; <img src="/upload/resources/images/code2.png"  /> </h3>
+
+        
+           <form  method="post" >
+        
+            Search by Share key
+            <input type=text name=searchkey value="{{.Key}}"/>
+        
+            <input type=submit name=search value="Search" class="btn btn-lg btn-primary align-right" />
+            </form>
+        </div>
+
+        <div class="well" style="padding:30px;">
+            <form enctype="multipart/form-data" action="/upload/up" method="post" >
+
+                <div class="row">
+                    <div class="form-group">
+                        <label for="file"><h4>choose file to upload to the server</h4></label>
+                        <input class="btn btn-default" type="file" name="uploadfile" placeholder='Choose'>
+
+                        <label for="days"><h4>Keep This File In Server For</h4></label>
+                        <input name="days" value="15" type="number" max="190">
+                        <label for="days">Days</label>
+                        <br/>
+                                                
+                            Key for sharing
+                        <input type=text name=key value="{{.Key}}"/> (Optional)
+ 
+                        <input type="submit" name="upload"  value="Upload File" class="btn btn-lg btn-primary align-right" />
+                    </div>
+                </div>
+            </form>
+        </div>
+           
+
