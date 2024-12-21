@@ -4,7 +4,11 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+
+	"github.com/motaz/redisaccess"
+
 	"math/rand"
 	"net/http"
 	"os"
@@ -108,7 +112,7 @@ func checkDirectoryExpiary(dir string) {
 	files2, _ := filepath.Glob(searchFiles)
 	for _, f2 := range files2 {
 		contents, _ := ioutil.ReadFile(f2)
-		var info fileInfoType
+		var info FileInfoType
 		json.Unmarshal(contents, &info)
 
 		if now.After(info.Expires) {
@@ -122,43 +126,41 @@ func checkDirectoryExpiary(dir string) {
 	}
 }
 
-func listFiles(userkey string, sharekey string) (files []fileInfoType) {
+func listFiles(userkey string, sharekey string) (files []FileInfoType) {
 
-	searchFiles := codeutils.GetConfigValue("config.ini", "shareroot")
-	if searchFiles == "" {
-
-		searchFiles = getHomeDirectory() + "/share/"
-	}
-	directories, _ := ioutil.ReadDir(searchFiles)
-	searchDirectory(searchFiles+"/*.expire", userkey, sharekey, &files)
-	for _, dir := range directories {
-		if dir.IsDir() {
-			searchDirectory(searchFiles+dir.Name()+"/*.expire", userkey, sharekey, &files)
-
-		}
-	}
+	searchDirectory(userkey, sharekey, &files)
 
 	return
 }
 
-func readMetaFile(filename string) fileInfoType {
+func readMetaFile(filename string) FileInfoType {
 	contents, _ := ioutil.ReadFile(filename)
-	var info fileInfoType
+	var info FileInfoType
 	json.Unmarshal(contents, &info)
 	return info
 
 }
-func searchDirectory(path, userkey string, sharekey string, files *[]fileInfoType) {
 
-	files2, _ := filepath.Glob(path)
-	for _, f2 := range files2 {
-		info := readMetaFile(f2)
+func searchDirectory(userkey string, sharekey string, files *[]FileInfoType) {
 
-		if ((userkey != "" && info.UserKey == userkey) ||
-			(sharekey != "" && info.ShareKey == sharekey)) &&
-			info.Filenameonly != "" {
-			*files = append(*files, info)
+	keys, err := redisaccess.GetKeys(FILE_INFO_KEY + "*")
 
+	if err != nil {
+		fmt.Println("Error: ", err.Error())
+	} else {
+		for _, key := range keys {
+			infoStr, _, _ := redisaccess.GetValue(key)
+			var info FileInfoType
+			err := json.Unmarshal([]byte(infoStr), &info)
+			if err != nil {
+				fmt.Println("Error: ", err.Error())
+			} else {
+
+				if ((userkey != "" && info.UserKey == userkey) ||
+					(sharekey != "" && info.ShareKey == sharekey)) && info.Filename != "" {
+					*files = append(*files, info)
+				}
+			}
 		}
 	}
 
@@ -171,11 +173,12 @@ func getHomeDirectory() string {
 	return currentdir.HomeDir
 }
 
-func suggestDirctory(sharekey string) string {
+func suggestDirctory(sharekey string) (entry string) {
 
-	hash := getMD5Hash(sharekey)
-	suggestDir := hash[:5]
-	return suggestDir
+	anum := codeutils.GetRandom(100000)
+	hash := getMD5Hash(fmt.Sprintf("%s-%s-%d", sharekey, time.Now().String(), anum))
+	entry = hash[:20]
+	return
 }
 
 func getMD5Hash(text string) string {
@@ -192,8 +195,7 @@ func checkIndexFile(r *http.Request) {
 			port := r.URL.Port()
 			port = strings.ReplaceAll(port, ":", "")
 			location = "http://" + r.Host + "/upload"
-			println(location)
-			println("host ", r.Host)
+
 		} else {
 			location = "/upload"
 		}

@@ -1,7 +1,8 @@
 package main
 
 import (
-	"encoding/json"
+	"bufio"
+	"bytes"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,7 +11,11 @@ import (
 	"time"
 
 	"github.com/motaz/codeutils"
+	"github.com/motaz/redisaccess"
 )
+
+const FILE_INFO_KEY = "share-files::info::"
+const FILE_CONTENT_KEY = "share-files::file::"
 
 // upload logic
 func upload(w http.ResponseWriter, r *http.Request) {
@@ -39,16 +44,8 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		if toHash == "" {
 			toHash = "default"
 		}
-		subdir := suggestDirctory(userkey)
-		shareroot := codeutils.GetConfigValue("config.ini", "shareroot")
-		if shareroot == "" {
-			shareroot = getHomeDirectory() + "/share/"
-		}
-		sharedir := shareroot + subdir
-		afilename := sharedir + "/" + handler.Filename
-		checkSubdir(sharedir)
-		f, err := os.OpenFile(afilename, os.O_WRONLY|os.O_CREATE, 0666)
-		defer f.Close()
+		entry := suggestDirctory(userkey)
+
 		expire := time.Now()
 
 		// Expiary
@@ -56,31 +53,31 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		daysInt, _ := strconv.Atoi(days)
 		if daysInt > 90 {
 			daysInt = 90
-
-			expire = expire.AddDate(0, 0, daysInt)
 		}
 
-		infoFilename := afilename + ".expire"
+		expire = expire.AddDate(0, 0, daysInt)
 
-		fileinfo := fileInfoType{Filename: afilename, Expires: expire, UserKey: userkey,
-			ShareKey: sharekey, Filenameonly: handler.Filename, Subdir: subdir}
-		jsonData, err := json.Marshal(fileinfo)
+		var dur time.Duration
+		atime := int(time.Hour) * daysInt * 24
+		dur = time.Duration(atime)
 
-		err = ioutil.WriteFile(infoFilename, jsonData, 0644)
-		if err != nil {
-			w.Write([]byte("<h3>Error: " + err.Error() + "</h3>"))
+		filer := bufio.NewReader(file)
+		buf := bytes.NewBuffer(nil)
+		size, err := io.Copy(buf, filer)
+		redisaccess.SetValue(FILE_CONTENT_KEY+entry, buf.Bytes(), dur)
+		fileinfo := FileInfoType{Entry: entry, Filename: handler.Filename,
+			Expires: expire, UserKey: userkey,
+			ShareKey: sharekey, Filenameonly: handler.Filename, Size: size}
 
-		} else {
-			io.Copy(f, file)
+		redisaccess.SetValue(FILE_INFO_KEY+entry, fileinfo, dur)
 
-			link := getCommonShareLink(r) + subdir + "/" + handler.Filename
-			fileinfo.Link = link
+		//link := getCommonShareLink(r) + subdir + "/" + handler.Filename
+		//	fileinfo.Link
 
-			mytemplate.ExecuteTemplate(w, "result.html", fileinfo)
+		mytemplate.ExecuteTemplate(w, "result.html", fileinfo)
 
-			writeLog("Received : " + handler.Filename + ", from " + r.RemoteAddr)
+		writeLog("Received : " + handler.Filename + ", from " + r.RemoteAddr)
 
-		}
 	}
 }
 

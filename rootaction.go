@@ -8,7 +8,8 @@ import (
 	"time"
 )
 
-type fileInfoType struct {
+type FileInfoType struct {
+	Entry        string
 	Filename     string
 	Filenameonly string
 	Expires      time.Time
@@ -16,6 +17,7 @@ type fileInfoType struct {
 	UserKey      string
 	ShareKey     string
 	Subdir       string
+	Size         int64
 }
 
 type uploadForm struct {
@@ -65,8 +67,7 @@ func viewUpload(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Write([]byte("<div  class='well'>"))
 
-	var files []fileInfoType
-
+	var files []FileInfoType
 	if searchkey != "" {
 		w.Write([]byte("<h3>Shared key Files</h3>"))
 
@@ -99,7 +100,7 @@ type DisplayData struct {
 	Host      string
 }
 
-func displayFiles(files []fileInfoType, w http.ResponseWriter, r *http.Request, canDelete bool) {
+func displayFiles(files []FileInfoType, w http.ResponseWriter, r *http.Request, canDelete bool) {
 
 	fmt.Fprintln(w, "<form method=post>")
 	fmt.Fprintln(w, "<table>")

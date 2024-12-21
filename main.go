@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+
+	"github.com/motaz/redisaccess"
 )
 
 var mytemplate *template.Template
@@ -30,22 +32,25 @@ func InitTemplate(embededTemplates embed.FS) error {
 
 func main() {
 	InitTemplate(templates)
+	_, err := redisaccess.InitRedisLocalhost()
+	if err != nil {
+		fmt.Println("Redis error: ", err.Error())
+	} else {
+		go loopCheck()
+		http.HandleFunc("/", redirectToIndex)
+		http.HandleFunc("/share-files", viewUpload)
+		http.HandleFunc("/share-files/", viewUpload)
+		http.HandleFunc("/share-files/up", upload)
+		http.Handle("/share-files/resources/", http.StripPrefix("/share-files/", http.FileServer(http.FS(static))))
 
-	go loopCheck()
-	http.HandleFunc("/", redirectToIndex)
-	http.HandleFunc("/upload", viewUpload)
-	http.HandleFunc("/upload/", viewUpload)
-	http.HandleFunc("/upload/up", upload)
-	http.Handle("/upload/resources/", http.StripPrefix("/upload/", http.FileServer(http.FS(static))))
-
-	println("ReceiveFile, Listening on port 10026")
-	println("http://localhost:10026")
-	http.ListenAndServe(":10026", nil)
-
+		fmt.Println("ReceiveFile, Listening on port 10026")
+		fmt.Println("http://localhost:10026")
+		http.ListenAndServe(":10026", nil)
+	}
 }
 
 func redirectToIndex(w http.ResponseWriter, req *http.Request) {
 
 	checkIndexFile(req)
-	http.Redirect(w, req, "/upload"+req.RequestURI, http.StatusTemporaryRedirect)
+	http.Redirect(w, req, "/share-files"+req.RequestURI, http.StatusTemporaryRedirect)
 }
