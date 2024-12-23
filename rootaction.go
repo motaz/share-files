@@ -1,97 +1,123 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"sort"
+
 	"net/http"
-	"os"
-	"strings"
+
 	"time"
+
+	"github.com/motaz/redisaccess"
 )
 
 type FileInfoType struct {
 	Entry        string
 	Filename     string
 	Filenameonly string
+	Uploadtime   time.Time
 	Expires      time.Time
 	Link         string
 	UserKey      string
 	ShareKey     string
+	ShareKeyHash string
 	Subdir       string
 	Size         int64
+	Downloads    int
 }
 
 type uploadForm struct {
 	Key string
 }
 
-func removeFiles(userkey string, w http.ResponseWriter, req *http.Request) {
+func removeFiles(userkey string, w http.ResponseWriter, req *http.Request) (success bool) {
 
 	list := req.Form["fileid"]
-	for _, file := range list {
-		info := readMetaFile(file + ".expire")
-		if info.UserKey == userkey {
+	success = true
+	for _, entry := range list {
+		infoBytes, found, _ := redisaccess.GetBytes(FILE_INFO_KEY + entry)
+		if found {
+			var info FileInfoType
+			json.Unmarshal(infoBytes, &info)
+			if info.UserKey == userkey {
 
-			err := os.Remove(file)
-			if err == nil || strings.Contains(err.Error(), "no such") {
-				err = os.Remove(file + ".expire")
-			}
-			if err != nil {
-				fmt.Fprintln(w, "<font color=red>Error deleting file: "+file+" : "+
-					err.Error()+"</font></br>")
-			} else {
+				err := redisaccess.RemoveValue(FILE_INFO_KEY + entry)
+				redisaccess.RemoveValue(FILE_CONTENT_KEY + entry)
+				if err != nil {
+					fmt.Fprintln(w, "<font color=red>Error deleting file: "+info.Filename+" : "+
+						err.Error()+"</font></br>")
+				} else {
 
-				fmt.Fprintln(w, "File : "+file+" has been removed</br>")
+					fmt.Fprintln(w, "File : "+info.Filename+" has been removed</br>")
+				}
 			}
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			success = false
+			fmt.Fprintln(w, "<font color=red>File not found </font></br>")
 		}
 	}
+	return
 
 }
 
 func viewUpload(w http.ResponseWriter, req *http.Request) {
 
-	checkIndexFile(req)
 	searchkey := req.FormValue("searchkey")
+	sharekey := req.FormValue("sharekey")
 	var uform uploadForm
 	uform.Key = searchkey
+	userkey := getUserKey(w, req)
 
+	var files []FileInfoType
+	if searchkey != "" || sharekey != "" {
+
+		searchDirectory("", searchkey, sharekey, &files)
+		for _, info := range files {
+			if info.UserKey == userkey {
+				uform.Key = info.ShareKey
+				break
+			}
+
+		}
+
+	}
 	err := mytemplate.ExecuteTemplate(w, "index.html", uform)
 
 	if err != nil {
 		w.Write([]byte("Error: " + err.Error()))
 	}
 
-	userkey := getUserKey(w, req)
-
 	if req.FormValue("remove") != "" {
-		removeFiles(userkey, w, req)
+		success := removeFiles(userkey, w, req)
+		if !success {
+			return
+		}
 	}
 	w.Write([]byte("<div  class='well'>"))
-
-	var files []FileInfoType
-	if searchkey != "" {
+	if searchkey != "" || sharekey != "" {
 		w.Write([]byte("<h3>Shared key Files</h3>"))
-
-		files = listFiles("", searchkey)
-		displayFiles(files, w, req, false)
-
 	} else {
 		w.Write([]byte("<h3>Your Previous Files</h3>"))
 
-		files = listFiles(userkey, "")
-
-		displayFiles(files, w, req, true)
-
+		searchDirectory(userkey, "", "", &files)
 	}
+
+	displayFiles(files, w, req, true)
 
 }
 
 type FileType struct {
-	Fileid    string
-	Filename  string
-	Filetime  string
-	Filelink  string
-	Sharekey  string
-	Candelete bool
+	Fileid       string
+	Filename     string
+	Expiretime   string
+	Uploadtime   string
+	Downloads    int
+	Filelink     string
+	Sharekey     string
+	Sharekeyhash string
+	Candelete    bool
 }
 
 type DisplayData struct {
@@ -105,7 +131,11 @@ func displayFiles(files []FileInfoType, w http.ResponseWriter, r *http.Request, 
 	fmt.Fprintln(w, "<form method=post>")
 	fmt.Fprintln(w, "<table>")
 
-	share := getCommonShareLink(r)
+	if len(files) > 0 {
+		sort.Slice(files, func(i, j int) bool {
+			return files[i].Uploadtime.After(files[j].Uploadtime)
+		})
+	}
 	var list []FileType
 	var displayData DisplayData
 	displayData.Candelete = canDelete
@@ -114,17 +144,15 @@ func displayFiles(files []FileInfoType, w http.ResponseWriter, r *http.Request, 
 	for _, file := range files {
 		var afile FileType
 		afile.Candelete = canDelete
-		afile.Fileid = file.Filename
+		afile.Fileid = file.Entry
 		afile.Sharekey = file.ShareKey
+		afile.Sharekeyhash = file.ShareKeyHash
 
-		subdir := ""
-		if file.Subdir != "" {
-			subdir = file.Subdir + "/"
-		}
-		afile.Filelink = share + subdir + file.Filenameonly
+		afile.Filelink = "view?id=" + file.Entry
 		afile.Filename = file.Filenameonly
-
-		afile.Filetime = file.Expires.String()[:19]
+		afile.Uploadtime = file.Uploadtime.String()[:19]
+		afile.Expiretime = file.Expires.String()[:19]
+		afile.Downloads = file.Downloads
 
 		list = append(list, afile)
 	}
@@ -133,6 +161,44 @@ func displayFiles(files []FileInfoType, w http.ResponseWriter, r *http.Request, 
 	err := mytemplate.ExecuteTemplate(w, "files.html", displayData)
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
+	}
+
+}
+
+func viewFile(w http.ResponseWriter, req *http.Request) {
+
+	entry := req.FormValue("id")
+
+	fileInfoBytes, found, err := redisaccess.GetBytes(FILE_INFO_KEY + entry)
+	if err != nil || !found {
+
+		fmt.Println("Error in viewFile: ", err.Error())
+		if !found {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "File not found")
+			return
+
+		}
+	} else if found {
+		var fileInfo FileInfoType
+		json.Unmarshal(fileInfoBytes, &fileInfo)
+		fileContents, _, err := redisaccess.GetBytes(FILE_CONTENT_KEY + entry)
+
+		if err != nil {
+			w.Write([]byte("Error: " + err.Error()))
+		} else {
+			w.Header().Set("Content-Disposition", "filename="+fileInfo.Filename+";")
+			w.Write(fileContents)
+			fileInfo.Downloads++
+			ttl, err := redisaccess.GetTTL(FILE_INFO_KEY + entry)
+			if err == nil {
+				redisaccess.SetValue(FILE_INFO_KEY+entry, fileInfo, ttl)
+			}
+
+			if err != nil {
+				w.Write([]byte("Error copying file: " + err.Error()))
+			}
+		}
 	}
 
 }

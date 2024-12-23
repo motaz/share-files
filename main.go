@@ -1,5 +1,6 @@
 // share-files project main.go
 // Started at 18.Feb.2018 by Motaz Abdel Azeem
+// Updated on 23.Dec.2024
 
 package main
 
@@ -36,21 +37,24 @@ func main() {
 	if err != nil {
 		fmt.Println("Redis error: ", err.Error())
 	} else {
-		go loopCheck()
+
 		http.HandleFunc("/", redirectToIndex)
 		http.HandleFunc("/share-files", viewUpload)
 		http.HandleFunc("/share-files/", viewUpload)
 		http.HandleFunc("/share-files/up", upload)
+		http.HandleFunc("/share-files/view", viewFile)
 		http.Handle("/share-files/resources/", http.StripPrefix("/share-files/", http.FileServer(http.FS(static))))
 
 		fmt.Println("ReceiveFile, Listening on port 10026")
 		fmt.Println("http://localhost:10026")
-		http.ListenAndServe(":10026", nil)
+		err := http.ListenAndServe(":10026", nil)
+		if err != nil {
+			fmt.Println("Error while listening: ", err.Error())
+		}
 	}
 }
 
 func redirectToIndex(w http.ResponseWriter, req *http.Request) {
 
-	checkIndexFile(req)
 	http.Redirect(w, req, "/share-files"+req.RequestURI, http.StatusTemporaryRedirect)
 }

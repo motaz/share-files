@@ -2,7 +2,8 @@
 
 <form method=post>
 <table >
-<tr><th></th><th>File</th><th>Shared Key</th><th>&emsp; Expiary</th></tr>
+<tr><th></th><th>File</th><th>Shared Key</th><th><center>Uploaded</center></th>
+<th>&emsp; Expiary</th><th>Downloads</th></tr>
 {{ $host := .Host}}
 {{ range .Files}}
 
@@ -15,15 +16,19 @@
   </td>
 
   <td>
-    <a target=_blank id="link" href='//{{.Filelink}}'>{{.Filename}}</a>
+    <a target=_blank id="link" href='share-files/{{.Filelink}}'>{{.Filename}}</a>
   </td>
   <td align=center><font color=green>
-			<a id="link" href='//{{$host}}/share-files?searchkey={{.Sharekey}}'>
+			<a id="link" href='//{{$host}}/share-files?sharekey={{.Sharekeyhash}}'>
 			{{.Sharekey}}</a></font>
   </td>
   <td align=center>
-   &emsp; {{.Filetime}}
-    </td>
+   &emsp; {{.Uploadtime}}
+  </td>
+  <td align=center>
+   &emsp; {{.Expiretime}}
+  </td>
+  <td><center>{{.Downloads}}</center></td>
 <tr>
 {{end}}
 </table>

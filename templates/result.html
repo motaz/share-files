@@ -31,8 +31,8 @@
                         <tr>
                             <th scope="row">1</th>
                             <td>Copy Link<br/>
-                                <a target=_blank id="link" href='//{{.Link}}'>
-                                <script>document.write(protocol);</script>//{{.Link}}</a>
+                                <a target=_blank id="link" href='/share-files/view?id={{.Entry}}'>
+                                {{.Filename}}</a>
                             </td>                    
                             <td>{{.Expires}}</td>
                             <td>{{.ShareKey}}</td>
