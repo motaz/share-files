@@ -3,7 +3,7 @@ module share-files
 go 1.23
 
 require (
-	github.com/motaz/codeutils v1.0.24
+	github.com/motaz/codeutils v1.0.32
 	github.com/motaz/redisaccess v1.0.6
 )
 
