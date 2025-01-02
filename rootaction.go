@@ -28,8 +28,9 @@ type FileInfoType struct {
 	IP           string
 }
 
-type uploadForm struct {
-	Key string
+type UploadFormType struct {
+	Key   string
+	Limit int
 }
 
 func removeFiles(userkey string, w http.ResponseWriter, req *http.Request) (success bool) {
@@ -46,8 +47,8 @@ func removeFiles(userkey string, w http.ResponseWriter, req *http.Request) (succ
 				err := redisaccess.RemoveValue(FILE_INFO_KEY + entry)
 				redisaccess.RemoveValue(FILE_CONTENT_KEY + entry)
 				if err != nil {
-					fmt.Fprintln(w, "<font color=red>Error deleting file: "+info.Filename+" : "+
-						err.Error()+"</font></br>")
+					fmt.Fprintln(w, "<font color=red>Error deleting file: "+info.Filename+
+						" : "+err.Error()+"</font></br>")
 				} else {
 
 					fmt.Fprintln(w, "File : "+info.Filename+" has been removed</br>")
@@ -67,9 +68,10 @@ func viewUpload(w http.ResponseWriter, req *http.Request) {
 
 	searchkey := req.FormValue("searchkey")
 	sharekey := req.FormValue("sharekey")
-	var uform uploadForm
+	var uform UploadFormType
 	uform.Key = searchkey
 	userkey := getUserKey(w, req)
+	uform.Limit = readKeeplimit()
 
 	var files []FileInfoType
 	if searchkey != "" || sharekey != "" {

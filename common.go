@@ -69,7 +69,7 @@ func searchDirectory(userkey string, searchkey, sharekey string, files *[]FileIn
 			var info FileInfoType
 			err := json.Unmarshal([]byte(infoStr), &info)
 			if err != nil {
-				fmt.Println("Error: ", err.Error())
+				writeLog("Error reading key: " + key + " : " + err.Error())
 			} else {
 
 				if ((userkey != "" && info.UserKey == userkey) ||
@@ -88,5 +88,14 @@ func suggestEntryID(akey string) (entry string) {
 	anum := codeutils.GetRandom(100000)
 	hash := codeutils.GetMD5(fmt.Sprintf("%s-%s-%d", akey, time.Now().String(), anum))
 	entry = hash[:20]
+	return
+}
+
+func readKeeplimit() (limit int) {
+
+	limit, _ = codeutils.ReadINIAsInt("config.ini", "", "keeplimit")
+	if limit < 1 {
+		limit = 35
+	}
 	return
 }
