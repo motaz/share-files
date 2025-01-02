@@ -58,9 +58,11 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	buf := bytes.NewBuffer(nil)
 	size, err := io.Copy(buf, filer)
 	redisaccess.SetBytes(FILE_CONTENT_KEY+entry, buf.Bytes(), dur)
+	ip := codeutils.GetRemoteIP(r)
 	fileinfo := FileInfoType{Entry: entry, Filename: handler.Filename,
 		Expires: expire, UserKey: userkey,
-		ShareKey: sharekey, Filenameonly: handler.Filename, Size: size, Uploadtime: time.Now()}
+		ShareKey: sharekey, Filenameonly: handler.Filename, Size: size, Uploadtime: time.Now(),
+		IP: ip}
 	if sharekey != "" {
 		fileinfo.ShareKeyHash = codeutils.GetMD5(sharekey + userkey + "10022-0#2")
 	}

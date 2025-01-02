@@ -25,6 +25,7 @@ type FileInfoType struct {
 	Subdir       string
 	Size         int64
 	Downloads    int
+	IP           string
 }
 
 type uploadForm struct {
