@@ -5,12 +5,20 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/motaz/codeutils"
+
 	"net/http"
 
 	"time"
 
 	"github.com/motaz/redisaccess"
 )
+
+type VisitorType struct {
+	IP      string
+	Country string
+	Time    time.Time
+}
 
 type FileInfoType struct {
 	Entry        string
@@ -26,6 +34,8 @@ type FileInfoType struct {
 	Size         int64
 	Downloads    int
 	IP           string
+	Country      string
+	Visits       []VisitorType
 }
 
 type UploadFormType struct {
@@ -151,7 +161,7 @@ func displayFiles(files []FileInfoType, w http.ResponseWriter, r *http.Request, 
 		afile.Sharekey = file.ShareKey
 		afile.Sharekeyhash = file.ShareKeyHash
 
-		afile.Filelink = "view?id=" + file.Entry
+		afile.Filelink = file.Entry
 		afile.Filename = file.Filenameonly
 		afile.Uploadtime = file.Uploadtime.String()[:19]
 		afile.Expiretime = file.Expires.String()[:19]
@@ -166,6 +176,37 @@ func displayFiles(files []FileInfoType, w http.ResponseWriter, r *http.Request, 
 		fmt.Fprintf(w, err.Error())
 	}
 
+}
+
+func downloadFile(w http.ResponseWriter, req *http.Request, fileInfoBytes []byte, entry string) {
+
+	var fileInfo FileInfoType
+	json.Unmarshal(fileInfoBytes, &fileInfo)
+	fileContents, _, err := redisaccess.GetBytes(FILE_CONTENT_KEY + entry)
+
+	if err != nil {
+		w.Write([]byte("Error: " + err.Error()))
+	} else {
+		w.Header().Set("Content-Disposition", "filename="+fileInfo.Filename+";")
+		w.Write(fileContents)
+		userkey := getUserKey(w, req)
+		if userkey != fileInfo.UserKey {
+			fileInfo.Downloads++
+			var visitor VisitorType
+			visitor.IP = codeutils.GetRemoteIP(req)
+			visitor.Country, _ = getCountryName(visitor.IP)
+			visitor.Time = time.Now()
+			fileInfo.Visits = append(fileInfo.Visits, visitor)
+			ttl, err := redisaccess.GetTTL(FILE_INFO_KEY + entry)
+			if err == nil {
+				redisaccess.SetValue(FILE_INFO_KEY+entry, fileInfo, ttl)
+			}
+		}
+
+		if err != nil {
+			w.Write([]byte("Error copying file: " + err.Error()))
+		}
+	}
 }
 
 func viewFile(w http.ResponseWriter, req *http.Request) {
@@ -183,25 +224,41 @@ func viewFile(w http.ResponseWriter, req *http.Request) {
 
 		}
 	} else if found {
+		downloadFile(w, req, fileInfoBytes, entry)
+	}
+
+}
+
+func viewFileInfo(w http.ResponseWriter, req *http.Request) {
+
+	entry := req.FormValue("id")
+
+	fileInfoData, found, err := redisaccess.GetBytes(FILE_INFO_KEY + entry)
+	if err != nil || !found {
+
+		fmt.Println("Error in viewFileInfo: ", err.Error())
+		if !found {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "File not found")
+			return
+
+		}
+	} else if found {
 		var fileInfo FileInfoType
-		json.Unmarshal(fileInfoBytes, &fileInfo)
-		fileContents, _, err := redisaccess.GetBytes(FILE_CONTENT_KEY + entry)
-
-		if err != nil {
-			w.Write([]byte("Error: " + err.Error()))
+		userKey := getUserKey(w, req)
+		json.Unmarshal(fileInfoData, &fileInfo)
+		if userKey != fileInfo.UserKey {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Access denied"))
 		} else {
-			w.Header().Set("Content-Disposition", "filename="+fileInfo.Filename+";")
-			w.Write(fileContents)
-			fileInfo.Downloads++
-			ttl, err := redisaccess.GetTTL(FILE_INFO_KEY + entry)
-			if err == nil {
-				redisaccess.SetValue(FILE_INFO_KEY+entry, fileInfo, ttl)
-			}
-
+			err := mytemplate.ExecuteTemplate(w, "fileinfo.html", fileInfo)
 			if err != nil {
-				w.Write([]byte("Error copying file: " + err.Error()))
+
+				fmt.Fprintf(w, err.Error())
+
 			}
 		}
+
 	}
 
 }

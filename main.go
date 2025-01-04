@@ -43,6 +43,8 @@ func main() {
 		http.HandleFunc("/share-files/", viewUpload)
 		http.HandleFunc("/share-files/up", upload)
 		http.HandleFunc("/share-files/view", viewFile)
+		http.HandleFunc("/share-files/fileinfo", viewFileInfo)
+
 		http.Handle("/share-files/resources/", http.StripPrefix("/share-files/", http.FileServer(http.FS(static))))
 
 		fmt.Println("ReceiveFile, Listening on port 10026")

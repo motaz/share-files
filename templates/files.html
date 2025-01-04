@@ -16,7 +16,7 @@
   </td>
 
   <td>
-    <a target=_blank id="link" href='//{{$host}}/share-files/{{.Filelink}}'>{{.Filename}}</a>
+    <a target=_blank id="link" href='//{{$host}}/share-files/view?id={{.Filelink}}'>{{.Filename}}</a>
   </td>
   <td align=center><font color=green>
 			<a id="link" href='//{{$host}}/share-files?sharekey={{.Sharekeyhash}}'>
@@ -28,7 +28,10 @@
   <td align=center>
    &emsp; {{.Expiretime}}
   </td>
-  <td><center>{{.Downloads}}</center></td>
+  <td><center>
+  <a  href='//{{$host}}/share-files/fileinfo?id={{.Filelink}}'>
+  {{.Downloads}}
+  </a></center></td>
 <tr>
 {{end}}
 </table>

@@ -6755,3 +6755,37 @@ button.close {
   }
 }
 /*# sourceMappingURL=bootstrap.css.map */
+
+     body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .mediumtable {
+            width: 60%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 2px;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+       
+        p {
+            font-size: 13px;
+        }      
+        .smallbutton {
+            font-size: 10px;
+
+            margin-left: 10px;
+            padding: 6px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .smallbutton:hover {
+            background-color: #45a049;
+        }

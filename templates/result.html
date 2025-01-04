@@ -1,7 +1,9 @@
 <html>
     <head>
+    {{ template "copylink" }}
+
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title> Stored files  </title>
+        <title> Share files  </title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="/share-files/resources/css/bootstrap.css" rel="stylesheet" type="text/css" />
@@ -13,7 +15,7 @@
         <div class="container">
             <div class="row">
                 <h1>  
-                    <a href="/share-files">Home</a>
+                    <a href="/share-files">Share File</a>
                 </h1>
             </div>
             <div class="row jumbotron">
@@ -33,6 +35,8 @@
                             <td>Copy Link<br/>
                                 <a target=_blank id="link" href='/share-files/view?id={{.Entry}}'>
                                 {{.Filename}}</a>
+                              <button class="smallbutton" onclick="copyLink('link')">Copy Link</button> 
+
                             </td>                    
                             <td>{{.Expires}}</td>
                             <td>{{.ShareKey}}</td>

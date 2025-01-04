@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+{{ template "copylink" }}
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="/share-files/resources/css/bootstrap.css" rel="stylesheet" type="text/css" />
+        <link href="/share-files/resources/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+
+    <title>File Visitors</title>
+    
+
+    <style>
+           
+  
+    </style>
+</head>
+<body>
+
+
+    
+  <div class="container">
+     <div class="row">
+        <h1>  
+             <a href="/share-files">Share Files</a>
+        </h1>
+            </div>
+            <div class="row jumbotron">
+    <p>Visitors for
+         <a target=_blank id="link" href='/share-files/view?id={{.Entry}}'> {{ .Filename }}
+        </a>       
+        <button class="smallbutton"  onclick="copyLink('link')">Copy Link</button> 
+      </p>
+
+    <table class="mediumtable" >
+        <thead>
+            <tr>
+                <th>IP Address</th>
+                <th>Country</th>
+                <th>Visit Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Visits }}
+            <tr>
+                <td>{{ .IP }}</td>
+                <td>{{ .Country }}</td>
+                <td>{{ .Time }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+    </div>
+</body>
+</html>`

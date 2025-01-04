@@ -44,7 +44,7 @@ func setCookies(w http.ResponseWriter, r *http.Request) (userKey string) {
 
 	expiration := time.Now().Add(time.Hour * 24 * 90)
 	expiration2 := time.Now().Add(time.Hour * 24 * 100)
-	userKey = strconv.Itoa(codeutils.GetRandom(10000000))
+	userKey = strconv.Itoa(codeutils.GetRandom(1000000000))
 	cookie := http.Cookie{Name: "userkey", Value: userKey, Expires: expiration}
 	cookie2 := http.Cookie{Name: "secondkey", Value: userKey, Expires: expiration2}
 
@@ -96,6 +96,29 @@ func readKeeplimit() (limit int) {
 	limit, _ = codeutils.ReadINIAsInt("config.ini", "", "keeplimit")
 	if limit < 1 {
 		limit = 35
+	}
+	return
+}
+
+type CountryInfo struct {
+	Success     bool   `json:"success"`
+	Countryname string `json:"countryname"`
+	CountryCode string `json:"countrycode2"`
+}
+
+func getCountryName(ip string) (countryName, countryCode string) {
+
+	iplocationURL, _ := codeutils.ReadINIValue("config.ini", "", "iplocationurl",
+		"http://host.code.sd/iplocation")
+
+	result := codeutils.CallURLAsGet(iplocationURL+"?ip="+ip, 3)
+	if result.Err == nil {
+		var info CountryInfo
+		err := json.Unmarshal(result.Content, &info)
+		if err == nil {
+			countryName = info.Countryname
+			countryCode = info.CountryCode
+		}
 	}
 	return
 }
