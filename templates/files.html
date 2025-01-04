@@ -2,7 +2,9 @@
 
 <form method=post>
 <table >
-<tr><th></th><th>File</th><th>Shared Key</th><th><center>Uploaded</center></th>
+<tr><th></th><th>File</th><th>Shared Key <br/>
+<font size=-2>(you can copy link and share it)</font></th>
+<th><center>Uploaded</center></th>
 <th>&emsp; Expiary</th><th>Downloads</th></tr>
 {{ $host := .Host}}
 {{ range .Files}}
@@ -44,6 +46,6 @@
 {{ template "putprotocol"  }}
 
       </div><div class='well'>
-	      Copyright &copy; Code 2020-2024</div></div>
+	      Copyright &copy; Code 2020-2025</div></div>
   </body>
 </html>

@@ -2757,8 +2757,8 @@ select[multiple].input-lg {
   height: auto;
 }
 .form-group-lg .form-control {
-  height: 46px;
-  padding: 10px 16px;
+  height: 20px;
+  padding: 8px 10px;
   font-size: 18px;
   line-height: 1.3333333;
   border-radius: 6px;
@@ -5817,9 +5817,9 @@ button.list-group-item-danger.active:focus {
   padding-bottom: 75%;
 }
 .well {
-  min-height: 20px;
-  padding: 19px;
-  margin-bottom: 20px;
+  min-height: 10px;
+  padding: 10px;
+  margin-bottom: 1f0px;
   background-color: #f5f5f5;
   border: 1px solid #e3e3e3;
   border-radius: 4px;
@@ -5831,7 +5831,7 @@ button.list-group-item-danger.active:focus {
   border-color: rgba(0, 0, 0, .15);
 }
 .well-lg {
-  padding: 24px;
+  padding: 14px;
   border-radius: 6px;
 }
 .well-sm {

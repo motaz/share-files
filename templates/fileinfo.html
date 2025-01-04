@@ -9,7 +9,7 @@
             <link href="/share-files/resources/css/bootstrap.css" rel="stylesheet" type="text/css" />
         <link href="/share-files/resources/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
 
-    <title>File Visitors</title>
+    <title>Share Files Visitors</title>
     
 
     <style>
@@ -18,8 +18,6 @@
     </style>
 </head>
 <body>
-
-
     
   <div class="container">
      <div class="row">
@@ -27,13 +25,16 @@
              <a href="/share-files">Share Files</a>
         </h1>
             </div>
+            <h3>File information</h3>
             <div class="row jumbotron">
-    <p>Visitors for
+    <p>File
          <a target=_blank id="link" href='/share-files/view?id={{.Entry}}'> {{ .Filename }}
         </a>       
         <button class="smallbutton"  onclick="copyLink('link')">Copy Link</button> 
-      </p>
-
+      <br/>
+      Uploaded at: <font size=-2>{{.Uploadtime}}</font><br/>
+         Will expire at: <font size=-2>{{.Expires}}</font></p>
+    <h4>Downloads</h4>
     <table class="mediumtable" >
         <thead>
             <tr>

@@ -1,5 +1,5 @@
 <head>
-    <title>Upload File</title>
+    <title>Share-Files</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,39 +9,31 @@
 <body>
     <div class="container">
 
-        <div class="well">
-            <h3> <a href="/share-files">Upload</a> any file And share it !
+        <div class="well"  style="padding:5px;">
+            <h3> <a href="/share-files">Share</a> Files
            &emsp;&emsp; <img src="/share-files/resources/images/code2.png"  /> </h3>
+    
+          </div>
 
-        
-           <form  method="post" >
-        
-            Search by Share key
-            <input type=text name=searchkey value="{{.Key}}"/>
-        
-            <input type=submit name=search value="Search" class="btn btn-lg btn-primary align-right" />
-            </form>
-        </div>
-
-        <div class="well" style="padding:30px;">
+        <div class="well" style="padding:10px;">
             <form enctype="multipart/form-data" action="/share-files/up" method="post" >
 
-                <div class="row">
-                    <div class="form-group">
-                        <label for="file"><h4>choose file to upload to the server</h4></label>
+            <label for="file"><h4>Choose file to upload to the server, then copy link to share it</h4></label>
                         <input class="btn btn-default" type="file" name="uploadfile" placeholder='Choose'>
 
                         <label for="days"><h4>Keep This File In Server For</h4></label>
-                        <input name="days" value="15" type="number" max="{{.Limit}}">
+                        <input name="days" value="15" type="number" max="{{.Limit}}" size=3>
                         <label for="days">Days</label>
                         <br/>
                                                 
-                            Key for sharing
-                        <input type=text name=key value="{{.Key}}"/> (Optional)
+                       <label for="key">     Key for sharing (e.g. MyCV)<br/> 
+                        </lable>
+                        <input type=text name=key value="{{.Key}}"/> (Optional) used for multi files
+                        <br/>
  
                         <input type="submit" name="upload"  value="Upload File" class="btn btn-lg btn-primary align-right" />
-                    </div>
-                </div>
+                   
+              
             </form>
         </div>
            
