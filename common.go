@@ -13,6 +13,12 @@ import (
 	"github.com/motaz/codeutils"
 )
 
+func readIniValue(section, key, defaultValue string) (avalue string) {
+
+	avalue, _ = codeutils.ReadINIValue("config.ini", section, key, defaultValue)
+	return
+}
+
 func getUserKey(w http.ResponseWriter, req *http.Request) (userKey string) {
 
 	userCookie, err := req.Cookie("userkey")

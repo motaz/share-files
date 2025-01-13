@@ -121,7 +121,8 @@ func upload(w http.ResponseWriter, r *http.Request) {
 				ShareKey: sharekey, Filenameonly: handler.Filename, Size: size, Uploadtime: time.Now(),
 				IP: clientIP}
 			if sharekey != "" {
-				fileinfo.ShareKeyHash = codeutils.GetMD5(sharekey + userkey + "10022-0#2")
+				spice := readIniValue("", "spice", "10022-0#2")
+				fileinfo.ShareKeyHash = codeutils.GetMD5(sharekey + userkey + spice)
 			}
 			redisaccess.SetValue(FILE_INFO_KEY+entry, fileinfo, dur)
 			incrementCount(clientIP, int(size))
